@@ -60,10 +60,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CHATBOT = Flask(__name__, static_folder="static",template_folder='templates')
 
-CHATBOT.secret_key = "scikit-nb-adaptive-nlp-key"
+CHATBOT.secret_key = os.getenv("SECRET_KEY", "dev-key")
 CHATBOT.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=False
+    SESSION_COOKIE_SECURE=True
 )
 
 oauth = OAuth(CHATBOT)
@@ -867,8 +867,16 @@ def login():
 def google_login():
     redirect_uri = url_for('callback', _external=True)
     return google.authorize_redirect(redirect_uri)
-
+    
 @CHATBOT.route("/callback")
+def callback():
+    token = google.authorize_access_token()
+    resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
+    user_info = resp.json()
+
+    session['user'] = user_info['email']
+    return redirect(url_for('home'))
+'''@CHATBOT.route("/callback")
 def callback():
     try:
         token = google.authorize_access_token()
@@ -877,7 +885,7 @@ def callback():
         user_info = resp.json()
         session['user'] = user_info['email']
         #return redirect("/")
-        return redirect(url_for('home'))
+        return redirect(url_for('home'))'''
         
 
     except Exception as e:
