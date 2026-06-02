@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programming Agent Workspace</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+     
+       /* ==========================================================================
+           🔒 VIEWPORT LOCKING SYSTEM (Stops the page from moving/scrolling)
+           ========================================================================== */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        body { 
+            display: flex; 
+            width: 100%;
+            height: 100vh; /* Locks body to exact viewport height  and dynamic viewport */
+            background-color: #0d1224; 
+            color: #fff; 
+            overflow: hidden; /* Prevent global page scrolling */
+            
+        }
+        
+        /* Sidebar Panel - Fixed height matching parent */
+        .sidebar { 
+            width: 300px; 
+            background-color: #171e36; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px 15px; 
+            gap: 20px; 
+            border-right: 1px solid #1e294b; 
+            transition: transform 0.3s ease;
+            z-index: 10;
+            height: 100vh; 
+        }
+
+        /* Main Chat Frame - Vertically stacked, takes up all remaining space */
+        .chat-area { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; /* Must match parent */
+            background-color: #0f172a; 
+            overflow: hidden; /* Stops whole chat area from scrolling */
+        }
+
+        .chat-header { 
+            height: 70px; /* Fixed explicit height for header */
+            padding: 0 20px; 
+            background-color: #0f172a; 
+            border-bottom: 1px solid #1e294b; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            flex-shrink: 0; /* Prevents header from squishing */
+        }
+
+        /* 🌟 THE ONLY BOX ALLOWED TO SCROLL */
+        .message-container { 
+            flex: 1; 
+            overflow-y: auto; /* Activates scrollbars ONLY inside this container */
+            padding: 30px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            background-color: #0f172a;
+        }
+
+        .input-panel { 
+            min-height: 60px; /* Fixed explicit height for input desk */
+            padding: 10px 15px; 
+            background-color: #0f172a; 
+            display: flex; 
+            gap: 15px; 
+            align-items: center; 
+            flex-shrink: 0; /* Prevents input panel from hiding under the keyboard */
+            border-top: 1px solid #1e294b;
+        }
+           
+        /* Active Workspace Card */
+        .active-card { background: #111726; border: 1px solid #2e3b63; border-radius: 8px; padding: 15px; position: relative; }
+        .agent-tag { background: #6366f1; color: white; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 4px; width: max-content; margin-bottom: 10px; text-transform: uppercase; }
+        .card-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .card-status { font-size: 12px; color: #10b981; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+        .card-desc { font-size: 11px; color: #64748b; }
+
+        /* Navigation Button */
+        .new-chat-btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .new-chat-btn:hover { background: #1d4ed8; }
+        
+        .section-title { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; }
+        .chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        
+        /* Chat Items */
+        .chat-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 8px; cursor: pointer; background: #1e294b; border: 1px solid transparent; font-size: 14px; color: #cbd5e1; transition: all 0.2s; }
+        .chat-item:hover { background: #243361; color: #fff; }
+        .chat-item.active { background: #1e294b; border-color: #3b82f6; color: #fff; }
+        .chat-item .chat-info { display: flex; align-items: center; gap: 10px; width: 80%; }
+        .chat-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .delete-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; transition: color 0.2s; }
+        .delete-btn:hover { color: #f43f5e; }
+
+        /* Main Workspace Section */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background-color: #0f172a; }
+        .chat-header { padding: 20px; background-color: #0f172a; border-bottom: 1px solid #1e294b; font-size: 16px; font-weight: 600; color: #f8fafc; display: flex; align-items: center; gap: 15px; }
+        
+        .menu-toggle 
+        { 
+         background: #2563eb; 
+         border: none; 
+         color: #fff; 
+         width: 40px; 
+         height: 40px; 
+         border-radius: 6px; 
+         display: flex; 
+         align-items: center; 
+         justify-content: center; 
+         cursor: pointer; 
+         font-size: 18px; 
+         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+         z-index: 12;
+        }
+        .menu-toggle:hover { background: #1d4ed8;}
+
+        .message-container { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .welcome-box { background-color: #111726; border: 1px solid #1e294b; padding: 15px 20px; border-radius: 8px; color: #94a3b8; font-size: 14px; max-width: max-content; margin-bottom: 10px; }
+
+        /* Bubble Elements Styling */
+        .msg { max-width: 80%; padding: 14px 18px; border-radius: 8px; line-height: 1.6; font-size: 14px; word-wrap: break-word; }
+        .user-msg { background-color: #2563eb; color: #fff; align-self: flex-end; }
+        .bot-msg { 
+            background: transparent !important; 
+            color: #cbd5e1 !important; 
+            align-self: flex-start !important; 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            padding: 5px 10px !important;
+
+
+            /* This forces the exact small font size you want */
+            font-size: 14px !important; 
+            font-weight: normal !important;
+            line-height: 1.6 !important;
+            
+            /* This completely stops text from running off the screen */
+            white-space: normal !important; 
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            display: block !important;
+        } 
+        
+        /* Markdown Spacing Rule sets */
+        .bot-msg pre { background: #0b0f19; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 14px 0; border: 1px solid #1e294b; }
+        .bot-msg code {
+             font-family: Courier New,Courier, monospace;
+              color: #f472b6; 
+              font-size: 13px; 
+            }
+        .bot-msg h1 { 
+            font-size: 19px; 
+            margin-bottom: 12px; 
+            color: #fff; 
+            font-weight: 600; 
+        }
+        .bot-msg h2 {
+            font-size: 18px; 
+            margin: 16px 0 10px 0;
+            color: #fff; 
+            font-weight: 600; 
+            }
+        .bot-msg h3 { 
+            font-size: 16px !important;
+            font-weight: bold !important;
+            color: #ffffff !important;
+            margin-top: 15px !important;
+            margin-bottom: 5px !important;
+            }
+        .bot-msg p {
+            font-size: 14px !important;
+            font-weight: normal !important;
+            color: #cbd5e1 !important;
+            line-height: 1.6 !important;
+            }
+            /* Standard Paragraphs */
+        .bot-msg p { font-size: 14px; margin-bottom: 12px; color: #cbd5e1; line-height: 1.6; }
+
+        /* Lists & Bullet Points - Ensuring sizes match standard paragraphs perfectly */
+        .bot-msg ul, .bot-msg ol { margin: 8px 0 14px 20px; }
+        .bot-msg li { font-size: 14px; margin-bottom: 6px; color: #cbd5e1; line-height: 1.5; }
+
+        /* Code Blocks & Inline Sandboxes */
+        
+        /* Input Container Elements */
+        .input-panel { padding: 25px 30px; background-color: #0f172a; display: flex; gap: 15px; align-items: center; }
+        .input-wrapper { flex: 1; background: #1e294b; border: 1px solid #334155; border-radius: 8px; display: flex; align-items: center; padding: 4px 10px; }
+        .input-wrapper:focus-within { border-color: #3b82f6; }
+        .input-wrapper input { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-size: 14px; outline: none; }
+        .send-btn { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; white-space: nowrap; }
+        .send-btn:hover { background: #059669; }
+
+        /* ==========================================================================
+           📱 RESPONSIVE MEDIA QUERIES (Mobile Breakpoints Overwrite)
+           ========================================================================== */
+/* ==========================================================================
+           📱 MOBILE VIEWPORT FIXES (Add/Update inside your max-width: 768px query)
+           ========================================================================== */
+         /* ==========================================================================
+           📱 MOBILE VIEWPORT FIXES (Add/Update inside your max-width: 768px query)
+           ========================================================================== */
+           /* ==========================================================================
+           📱 MOBILE SIDEBAR TRANSITION FIX (Inside your max-width: 768px block)
+           ========================================================================== */
+          @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                transform: translateX(-100%); /* Hides the drawer off-screen left */
+                width: 280px;
+                margin-left: 0 !important; 
+                transition: transform 0.3s ease !important; /* Smooth slide out animation */
+                height: 100dvh !important;
+                z-index: 9999 !important; /* Forces drawer to float over everything */
+            }
+
+            /* 🌟 ADD THIS MISSING BLOCK: Brings the sidebar forward when active class is applied */
+            .sidebar.active {
+                transform: translateX(0) !important; 
+            }
+            
+            /* Dim backend overlay layer when menu drawer is open (Optional adjustment) */
+            .sidebar.active ~ .chat-area {
+                opacity: 0.4;
+                pointer-events: none; /* Stops accidental inputs when drawer is active */
+            }
+            
+            /* Ensure the toggle button always stays clickable on mobile */
+            .menu-toggle {
+                z-index: 10000 !important;
+                position: relative;
+            }
+             .input-panel {
+              padding: 8px;
+              gap: 8px;
+            }
+            .input-wrapper input{
+                font-size:14px;
+                padding:10px;
+
+            }
+            .send-btn{
+                padding:10px 20px;
+                font-size:14px;
+            }
+            html, body {/* prevent pull-to-refresh on mobile */
+             overscroll-behavior: none;
+            
+            }
+
+
+
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar" id="sidebarPanel"> 
+        <div class="active-card">
+            <div class="agent-tag">Query Agent</div>
+            <div class="card-title">⚙️ Active Workspace</div>
+            <div class="card-status">🛡️ System Core: Connected</div>
+            <div class="card-desc">Premium AI Access Enabled via Server</div>
+        </div>
+
+        <button class="new-chat-btn" onclick="createNewChat()">+ + New Chat Thread</button>
+        
+        <div class="section-title">Saved Discussions</div>
+        <div class="chat-list" id="chatList"></div>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-header">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <span id="currentChatTitle">🎓 Programming_Agent - Default Chat</span>
+        </div>
+        
+        <div class="message-container" id="msgContainer">
+            <div class="welcome-box" id="welcomePrompt">
+                New active session workspace [Default Chat] instantiated. Ask me anything!
+            </div>
+        </div>
+        
+        <div class="input-panel">
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="Ask a programming question..." onkeydown="if(event.key==='Enter') sendPrompt()">
+            </div>
+            <button class="send-btn" onclick="sendPrompt()">Send Prompt</button>
+        </div>
+    </div>
+
+    <script>
+        let currentChatName = "Default Chat";
+
+        window.onload = function() {
+            fetchSavedChats();
+        };
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebarPanel");
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle("active");
+                sidebar.classList.remove("collapsed");
+            } else {
+                sidebar.classList.toggle("collapsed");
+                sidebar.classList.remove("active");
+            }
+        }
+
+        document.addEventListener("click", function(event) {
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById("sidebarPanel");
+                const menuToggle = document.querySelector(".menu-toggle");
+        
+                if (sidebar.classList.contains("active") && 
+                    !sidebar.contains(event.target) && 
+                    !menuToggle.contains(event.target)) {
+                    sidebar.classList.remove("active");
+                }
+            }
+        }); 
+
+        function fetchSavedChats() {
+            fetch('/get_chats')
+                .then(res => res.json())
+                .then(data => {
+                    renderSidebar(data);
+                    if(data.length > 0) {
+                        loadChatWindow(data[data.length - 1].name, data);
+                    } else {
+                        createNewChat();
+                    }
+                });
+        } 
+
+        function renderSidebar(chats) {
+            const list = document.getElementById("chatList");
+            list.innerHTML = "";
+            chats.forEach(chat => {
+                const item = document.createElement("div");
+                item.className = `chat-item ${chat.name === currentChatName ? 'active' : ''}`;
+                
+                // ◄ FIXED: Auto-closes drawer on phone after selecting a thread option
+                item.onclick = () => {
+                    loadChatWindow(chat.name);
+                    if (window.innerWidth <= 768) {
+                        document.getElementById("sidebarPanel").classList.remove("active");
+                    }
+                };
+                
+                const infoWrapper = document.createElement("div");
+                infoWrapper.className = "chat-info";
+                infoWrapper.innerHTML = `💬 <span>${chat.name}</span>`;
+                
+                const delBtn = document.createElement("button");
+                delBtn.className = "delete-btn";
+                delBtn.innerHTML = "🗑️";
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteChatThread(chat.name);
+                };
+
+                item.appendChild(infoWrapper);
+                item.appendChild(delBtn);
+                list.appendChild(item);
+            });
+        }
+
+        function loadChatWindow(name, optionalData = null) {
+            currentChatName = name;
+            document.getElementById("currentChatTitle").innerText = `🎓 Programming_Agent - ${name}`;
+            
+            const welcomeBox = document.getElementById("welcomePrompt");
+            if(welcomeBox) welcomeBox.style.display = "none";
+
+            if(optionalData) {
+                displayMessages(optionalData.find(c => c.name === name));
+                renderSidebar(optionalData);
+            } else {
+                fetch('/get_chats').then(res => res.json()).then(chats => {
+                    displayMessages(chats.find(c => c.name === name));
+                    renderSidebar(chats);
+                });
+            }
+        }
+
+        function displayMessages(chatObj) {
+            const container = document.getElementById("msgContainer");
+            container.innerHTML = "";
+            if(!chatObj || !chatObj.messages || chatObj.messages.length === 0) {
+                container.innerHTML = `<div class="welcome-box" id="welcomePrompt">New active session workspace [Default Chat] instantiated. Ask me anything!</div>`;
+                return;
+            }
+
+            chatObj.messages.forEach(msg => {
+                if(msg.user) {
+    // Replace literal '\n' characters with actual line breaks for crisp user layout formatting
+               let cleanUserText = msg.user.replace(/\\n/g, '\n');
+                appendBubble(cleanUserText, "user-msg");
+                }
+                if(msg.bot) appendBubble(msg.bot, "bot-msg", msg.user);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function createNewChat() {
+            const tempName = "New Chat Thread " + Math.floor(Math.random() * 1000);
+            currentChatName = tempName;
+            document.getElementById("currentChatTitle").innerText = `🎓 Programming_Agent - New Chat Session`;
+            
+            const container = document.getElementById("msgContainer");
+            container.innerHTML = `<div class="welcome-box" id="welcomePrompt">New active session workspace [Default Chat] instantiated. Ask me anything!</div>`;
+
+            fetch('/save_chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: tempName, messages: [] })
+            }).then(() => fetchSavedChats());
+        }
+
+        function deleteChatThread(name) {
+            fetch('/delete-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_name: name })
+            }).then(() => fetchSavedChats());
+        }
+        function appendBubble(text, cssClass, userQueryContext = "") {
+            const container = document.getElementById("msgContainer");
+            
+            const welcomeBox = document.getElementById("welcomePrompt");
+            if(welcomeBox) welcomeBox.remove();
+
+            const bubble = document.createElement("div");
+            bubble.className = `msg ${cssClass}`;
+            
+            if (cssClass === "bot-msg") {
+                let cleanedQuery = userQueryContext ? userQueryContext.toLowerCase() : "";
+                let filteredText = text;
+
+                // 1. If the user asks for Python Loops, show the Python layout
+                if (cleanedQuery.includes("loop") && cleanedQuery.includes("python")) {
+                    filteredText = `# 🚀 Topic Found: Python Loops and Iteration\n**Curriculum Area:** Python Basic — [Basic Track]\n\n**Definition:** *Structures used to execute a block of code repeatedly in Python.*\n\n### 📘 Conceptual Breakdown:\n1. **For Loops**: Used to iterate over sequences (like lists, tuples, or ranges).\n2. **While Loops**: Execute as long as a condition evaluates to True.\n\n### 💻 Applied Code Sandbox:\n\`\`\`python\n# Iterating with a for loop\nfor i in range(3):\n    print(i)\n\n# Checking states with a while loop\ncount = 0\nwhile count < 3:\n    print(count)\n    count += 1\n\`\`\``;
+                } 
+                // 2. If the user asks for Java Loops, show the Java layout
+                else if (cleanedQuery.includes("loop") && cleanedQuery.includes("java")) {
+                    filteredText = `# 🚀 Topic Found: Java Iteration Loops\n**Curriculum Area:** Java Basic — [Basic Track]\n\n**Definition:** *Control flow structures built to repeat standard blocks of code multiple times in Java.*\n\n### 📘 Conceptual Breakdown:\n1. **For Loop**: Ideal when the exact number of iterations is known.\n2. **While Loop**: Tests conditions before running the inner statement blocks.\n\n### 💻 Applied Code Sandbox:\n\`\`\`java\n// Standard Java for loop structure\nfor(int i = 0; i < 3; i++) {\n    System.out.println(i);\n}\n\`\`\``;
+                }
+                // 🌟 3. NEW STEP: If the user asks for C loops, intercept the message and show C layout!
+                else if (cleanedQuery.includes("loop") && (cleanedQuery.includes("c ") || cleanedQuery === "c" || cleanedQuery.endsWith(" c") || cleanedQuery.startsWith("c "))) {
+                    filteredText = `# 🚀 Topic Found: C System-Level Loops\n**Curriculum Area:** C Track — [System-Level Foundations]\n\n**Definition:** *Procedural control tracks used for structured flow layout and block repetition in C.*\n\n### 📘 Conceptual Breakdown:\n1. **For Loop**: Used to repeat a block of statements a specific number of times.\n2. **While Loop**: Repeats a statement while a given condition remains true.\n3. **Do-While Loop**: Executes the block once first, then checks the condition.\n\n### 💻 Applied Code Sandbox:\n\`\`\`c\n#include <stdio.h>\n\nint main() {\n    // Standard C loop structure\n    for(int i = 0; i < 3; i++) {\n        printf("%d\\n", i);\n    }\n    return 0;\n}\n\`\`\``;
+                }
+
+                // Clean any double-escaped line breaks and compile to Markdown
+                let finalMarkdown = filteredText.replace(/\\n/g, '\n');
+                bubble.innerHTML = marked.parse(finalMarkdown); 
+            } else {
+                bubble.innerText = text;
+            }
+            
+            container.appendChild(bubble);
+
+            // Smoothly scroll down to show the new response
+            container.scrollTo({    
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+            
+        function sendPrompt() {
+            const input = document.getElementById("userInput");
+            const query = input.value.trim();
+            if(!query) return;
+
+            appendBubble(query, "user-msg");
+            input.value = "";
+
+            fetch('/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: query, chat_name: currentChatName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                appendBubble(data.response, "bot-msg", query);
+                if (data.updated_chat_name && data.updated_chat_name !== currentChatName) {
+                    currentChatName = data.updated_chat_name;
+                    document.getElementById("currentChatTitle").innerText = `🎓 Programming_Agent - ${currentChatName}`;
+                }
+                fetch('/get_chats').then(r => r.json()).then(chats => renderSidebar(chats));
+
+                // 🌟 FIXED: Smoothly scrolls to focus on the TOP of the new bot response
+                const messages = document.getElementsByClassName("bot-msg");
+                if (messages.length > 0) {
+                    const lastBotMessage = messages[messages.length - 1];
+                    lastBotMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

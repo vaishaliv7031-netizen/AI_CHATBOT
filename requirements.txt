@@ -1,0 +1,7 @@
+Flask
+authlib
+python-dotenv
+numpy
+nltk
+scikit-learn
+gunicorn
