@@ -1103,5 +1103,4 @@ def chatbot_api():
 
 
 if __name__ == "__main__":
-
-    CHATBOT.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))# for render debuging
+    CHATBOT.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
