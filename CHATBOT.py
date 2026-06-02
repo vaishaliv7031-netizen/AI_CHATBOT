@@ -527,8 +527,8 @@ def get_bot_response(user_message, database_json):
                         for example in examples:
 
                             lang_tag = "python" if "python" in category_track_name.lower() else "c"
+                            code_blocks += f"\n```{lang_tag}\n{example}\n```\n"
 
-                            code_blocks += f"\n\`\`\`{lang_tag}\n{example}\n\`\`\`\n"
 
                         
 
