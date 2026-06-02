@@ -866,6 +866,7 @@ def login():
 @CHATBOT.route("/google-login")
 def google_login():
     redirect_uri = url_for('callback', _external=True)
+    print("Redirect URI:", redirect_uri)
     return google.authorize_redirect(redirect_uri)
     
 @CHATBOT.route("/callback")
