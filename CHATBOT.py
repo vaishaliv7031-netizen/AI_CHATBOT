@@ -870,6 +870,7 @@ def google_login():
     
 @CHATBOT.route("/callback")
 def callback():
+    print("🔥 CALLBACK HIT") 
     try:
         token = google.authorize_access_token()
 
