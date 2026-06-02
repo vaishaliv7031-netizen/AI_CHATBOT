@@ -873,10 +873,9 @@ def callback():
     try:
         token = google.authorize_access_token()
 
-        resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
-        user_info = resp.json()
+        user_info = google.parse_id_token(token)
 
-        session['user'] = user_info['email']
+        session['user'] = user_info.get("email")
 
         return redirect(url_for('home'))
 
