@@ -63,7 +63,7 @@ CHATBOT = Flask(__name__, static_folder="static",template_folder='templates')
 CHATBOT.secret_key = os.getenv("SECRET_KEY", "dev-key")
 CHATBOT.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=FALSE
+    SESSION_COOKIE_SECURE=False
 )
 
 oauth = OAuth(CHATBOT)
