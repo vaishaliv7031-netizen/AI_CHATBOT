@@ -62,10 +62,10 @@ CHATBOT = Flask(__name__, static_folder="static",template_folder='templates')
 
 CHATBOT.secret_key = os.getenv("SECRET_KEY", "dev-key")
 CHATBOT.config.update(
+    SECRET_KEY=os.getenv("SECRET_KEY", "dev-key"),
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=False
 )
-
 oauth = OAuth(CHATBOT)
 
 google = oauth.register(
@@ -76,7 +76,9 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid email profile'
-    }
+    },
+    # ✅ ADD THIS
+    authorize_params=None
 )
 
 # Fixed Absolute File Paths
@@ -871,13 +873,13 @@ def google_login():
     
 @CHATBOT.route("/callback")
 def callback():
-    print("🔥 CALLBACK HIT") 
     try:
         token = google.authorize_access_token()
 
-        user_info = google.parse_id_token(token)
+        # 🔥 FIX: explicitly handle nonce-safe userinfo call
+        user_info = google.get('https://www.googleapis.com/oauth2/v2/userinfo').json()
 
-        session['user'] = user_info.get("email")
+        session['user'] = user_info['email']
 
         return redirect(url_for('home'))
 
