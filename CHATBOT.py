@@ -870,12 +870,18 @@ def google_login():
     
 @CHATBOT.route("/callback")
 def callback():
-    token = google.authorize_access_token()
-    resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
-    user_info = resp.json()
+    try:
+        token = google.authorize_access_token()
 
-    session['user'] = user_info['email']
-    return redirect(url_for('home'))
+        resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
+        user_info = resp.json()
+
+        session['user'] = user_info['email']
+
+        return redirect(url_for('home'))
+
+    except Exception as e:
+        return f"OAuth Error: {str(e)}"
 '''@CHATBOT.route("/callback")
 def callback():
     try:
@@ -885,11 +891,11 @@ def callback():
         user_info = resp.json()
         session['user'] = user_info['email']
         #return redirect("/")
-        return redirect(url_for('home'))'''
+        return redirect(url_for('home'))
         
 
     except Exception as e:
-        return f"OAuth Error: {str(e)}"
+        return f"OAuth Error: {str(e)}"'''
 
 @CHATBOT.route("/logout")
 def logout():
