@@ -20,7 +20,7 @@
         body { 
             display: flex; 
             width: 100%;
-            height: 100vh; /* Locks body to exact viewport height  and dynamic viewport */
+            height: 100dvh; /* Locks body to exact viewport height  and dynamic viewport */
             background-color: #0d1224; 
             color: #fff; 
             overflow: hidden; /* Prevent global page scrolling */
@@ -38,7 +38,7 @@
             border-right: 1px solid #1e294b; 
             transition: transform 0.3s ease;
             z-index: 10;
-            height: 100vh; 
+            height: 100dvh; 
         }
 
         /* Main Chat Frame - Vertically stacked, takes up all remaining space */
@@ -46,7 +46,7 @@
             flex: 1; 
             display: flex; 
             flex-direction: column; 
-            height: 100vh; /* Must match parent */
+            height: 100dvh; /* Must match parent */
             background-color: #0f172a; 
             overflow: hidden; /* Stops whole chat area from scrolling */
         }
@@ -82,6 +82,10 @@
             align-items: center; 
             flex-shrink: 0; /* Prevents input panel from hiding under the keyboard */
             border-top: 1px solid #1e294b;
+            position: sticky;
+            bottom: 0;
+            padding-bottom: env(safe-area-inset-bottom)
+          
         }
            
         /* Active Workspace Card */
@@ -205,18 +209,10 @@
         .send-btn { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; white-space: nowrap; }
         .send-btn:hover { background: #059669; }
 
+     
         /* ==========================================================================
-           📱 RESPONSIVE MEDIA QUERIES (Mobile Breakpoints Overwrite)
-           ========================================================================== */
-/* ==========================================================================
            📱 MOBILE VIEWPORT FIXES (Add/Update inside your max-width: 768px query)
-           ========================================================================== */
-         /* ==========================================================================
-           📱 MOBILE VIEWPORT FIXES (Add/Update inside your max-width: 768px query)
-           ========================================================================== */
-           /* ==========================================================================
-           📱 MOBILE SIDEBAR TRANSITION FIX (Inside your max-width: 768px block)
-           ========================================================================== */
+  
           @media (max-width: 768px) {
             .sidebar {
                 position: absolute;
@@ -248,8 +244,7 @@
             }
              .input-panel {
               padding: 8px;
-              gap: 8px;
-            }
+             }
             .input-wrapper input{
                 font-size:14px;
                 padding:10px;
@@ -259,6 +254,10 @@
                 padding:10px 20px;
                 font-size:14px;
             }
+           .message-container 
+           {
+            scroll-behavior: smooth;
+           }
             html, body {/* prevent pull-to-refresh on mobile */
              overscroll-behavior: none;
             
